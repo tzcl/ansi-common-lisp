@@ -1,0 +1,113 @@
+#+TITLE: ANSI Common Lisp
+#+SUBTITLE: Chapter 2 - Welcome to Lisp
+
+* Exercises
+
+In this chapter, we look at the basic syntax and constructs of Common Lisp.
+
+** Exercise 1
+#+begin_src lisp :tangle yes
+(+ (- 5 1) (+ 3 7))                     ; => 14
+(list 1 (+ 2 3))                        ; => (1 5)
+(if (listp 1) (+ 1 2) (+ 3 4))          ; => 7
+(list (and (listp 3) t) (+ 1 2))        ; => (nil 3)
+#+end_src
+
+** Exercise 2
+Give three distinct =cons= expressions that return ~(a b c)~:
+1. =(cons 'a (cons 'b (cons 'c nil)))=
+2. =(cons 'a '(b c))=
+3. =(cons 'a (list 'b 'c))=
+
+** Exercise 3
+#+begin_src lisp :tangle yes
+(defun fourth (lst)
+  (car (cdr (cdr (cdr lst)))))
+#+end_src
+
+** Exercise 4
+#+begin_src lisp :tangle yes
+(defun -greater (x y)
+  (if (> x y) x y))
+#+end_src
+
+** Exercise 5
+Remember that =and= is a special macro that returns =nil= in case any of the forms passed to it is =nil=, otherwise, it return the value of the last form.
+
+#+begin_src lisp :tangle yes
+(defun contains-nil (x)
+  (and (not (null x))
+       (or (null (car x))
+           (enigma (cdr x)))))
+
+(defun search-for (x y)                 ; returns the index of x in y
+  (if (null y) nil
+      (if (eql (car y) x) 0
+          (let ((z (search-for x (cdr y))))
+            (and z (+ z 1))))))
+#+end_src
+
+** Exercise 6
+#+begin_src lisp :tangle yes
+(car (x (cdr '(a (b c) d))))            ; => B
+(x 13 (/ 1 0))                          ; => 13
+(x #'list 1 nil)                        ; => (1)
+#+end_src
+
+Therefore, =x= must be =car= in the first expression, =or= in the second expression, and =apply= in the final expression.
+
+** Exercise 7
+#+begin_src lisp :tangle yes
+(defun contains-list (x)
+  (and (not (null x))
+       (or (listp (car x))
+           (contains-list (cdr x)))))
+#+end_src
+
+** Exercise 8
+It's interesting that Common Lisp lets you write loops. I agree that it makes some things easier to express but feels weird seeing it in Lisp since Scheme obviously doesn't have them.
+
+#+begin_src lisp :tangle yes
+(defun -dots-iter (n)
+  (do ((i 0 (+ i 1)))
+      ((>= i n) 'done)
+    (format t ".")))
+
+(defun -dots (n)
+  (if (> n 0)
+      (progn (format t ".") (-dots (- n 1)))
+      'done))
+
+(defun -occurs-iter (a lst)
+  (let ((count 0))
+    (dolist (obj lst)
+      (when (eql obj a) (setf count (+ count 1))))
+    count))
+
+(defun -occurs (a lst)
+  (cond ((null lst) 0)
+        ((eql a (car lst)) (+ 1 (-occurs a (cdr lst))))
+        (t (-occurs a (cdr lst)))))
+#+end_src
+
+** Exercise 9
+The problem with the first version is that =remove= doesn't mutate its argument so the function just sums up the entire list. The problem with the second version is that it doesn't handle the base case when the list is empty.
+
+#+begin_src lisp :tangle yes
+(defun summit (lst)
+  (cond ((null lst) 0)
+        ((null (car lst)) (summit (cdr lst)))
+        (t (+ (car lst) (summit (cdr lst))))))
+
+(defun summit2 (lst)
+  (apply #'+ (remove nil lst)))
+#+end_src
+
+* Quotes
++ "Like =quote=, =if= is a special operator. It could not possibly be implemented as a function, because the arguments in a function call are always evaluated, and the whole point of =if= is that only one of the last two arguments is evaluated."
++ On reading Lisp: "But when the code is properly indented, one has no trouble. You could omit most of the parentheses and still read it."
+  + Lisp without parentheses looks remarkably like Python (probably because Python is the only language that has its syntax rely on indentation). Is this why Peter Norvig likes it? [[https://news.ycombinator.com/item?id=1803351][He left this comment explaining his move to Python (closer to pseudocode)]].
++ "The second thing to know about =read= is that it is very powerful: =read= is a complete Lisp parser."
++ "The =lambda= in a lambda expression is not an operator. It is just a symbol." "Common Lisp retained it for the sake of tradition."
+  + I don't know why this was so shocking, but I always thought that =lambda= had some special meaning. It's used because earlier Lisps represented functions internally as lists and the only way to tell a function from an ordinary list was to chick if the first element was the symbol =lambda=.
++ "In Common Lisp, values have types, not variables."

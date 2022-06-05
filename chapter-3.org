@@ -1,0 +1,30 @@
+#+TITLE: Chapter 3
+#+SUBTITLE: Lists
+
+* Notes
++ "While =eql= returns true only if its arguments are the same object, =equal= essentially, returns true if its arguments would print the same."
+  + [[https://eli.thegreenplace.net/2004/08/08/equality-in-lisp][Equality in Lisp]]
+    + ===  compares only numbers (which may be of different types)
+    + =eq= compares symbols, two objects are =eq= iff they are actually the same object in memory (don't use for numbers or characters)
+    + =eql= is the default equality test, it is mostly like =eq= but works on numbers (type sensitive) and characters (case sensitive)
+    + =equal= compares general objects, two objects are =equal= iff they are =eql=, strings of =eql= characters or lists of =equal= objects (for anything else, =eq= is used)
+    + =equalp= is like =equal= but more lenient, comparison of numbers is type insensitive, comparison of strings  is case insensitive, and objects are =equalp= if their members are =equalp= (for anything else, =eq= is used)
++ "The reason Lisp has no pointers is that every value is conceptually a pointer. When you assign a value to a variable or store it in a data structure, what gets stored is actually a pointer to the value."
++ "By default, =member= compares objects using =eql=. You can override this default by using something called a /keyword/ argument."
+  + A keyword argument is of the form, =:test=, for example. We'll see later that keywords relate to namespaces somehow. We use them to refer to special arguments.
++ "You have to be careful when using =sort=, because it's /destructive/. For efficiency reasons, =sort= is allowed to modify the sequence given to it as an argument."
++ "A cons that isn't a proper list is called a /dotted list/. This is not a very good name, because conses that aren't proper lists are usually not meant to represent lists at all =(a . b)= is just some kind of pair."
++ "A list of conses is called an /assoc-list/ or /alist/. Assoc-lists are slow, but convenient in the first stages of a program: =((+ . "add") (- . "sub"))=."
+  + They can be optimised by converting to hashmaps
++ "The globals =*=,  =**=, =***= are always set to the last three values returned to the toplevel. These variables are useful in debugging."
++ "Consing will always cost something, and in some existing Lisp systems, it is quite expensive." "You can avoid some of this consing by using destructive functions, which try to re-use most of the structure of the lists passed to them as arguments."
++ "Run-length encoding is a simple compression algorithm for use in restaurants" -- LOL
+
+* Exercises
+Write a version of =union= that preserves the order of the elements in the original lists:
+#+begin_src lisp :tangle yes
+(defun new-union (l r)
+  )
+
+(union '(a b c) '(c b s))
+#+end_src

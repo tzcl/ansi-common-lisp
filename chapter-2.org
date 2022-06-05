@@ -1,5 +1,5 @@
-#+TITLE: ANSI Common Lisp
-#+SUBTITLE: Chapter 2 - Welcome to Lisp
+#+TITLE: Chapter 2
+#+SUBTITLE: Welcome to Lisp
 
 * Exercises
 

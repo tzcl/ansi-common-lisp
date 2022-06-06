@@ -10,7 +10,7 @@
     + =equal= compares general objects, two objects are =equal= iff they are =eql=, strings of =eql= characters or lists of =equal= objects (for anything else, =eq= is used)
     + =equalp= is like =equal= but more lenient, comparison of numbers is type insensitive, comparison of strings  is case insensitive, and objects are =equalp= if their members are =equalp= (for anything else, =eq= is used)
 + "The reason Lisp has no pointers is that every value is conceptually a pointer. When you assign a value to a variable or store it in a data structure, what gets stored is actually a pointer to the value."
-+ "By default, =member= compares objects using =eql=. You can override this default by using something called a /keyword/ argument."
++ "By default, =member= compares objects using =eql=. You can override this default by using a /keyword/ argument."
   + A keyword argument is of the form, =:test=, for example. We'll see later that keywords relate to namespaces somehow. We use them to refer to special arguments.
 + "You have to be careful when using =sort=, because it's /destructive/. For efficiency reasons, =sort= is allowed to modify the sequence given to it as an argument."
 + "A cons that isn't a proper list is called a /dotted list/. This is not a very good name, because conses that aren't proper lists are usually not meant to represent lists at all =(a . b)= is just some kind of pair."
@@ -21,10 +21,90 @@
 + "Run-length encoding is a simple compression algorithm for use in restaurants" -- LOL
 
 * Exercises
-Write a version of =union= that preserves the order of the elements in the original lists:
-#+begin_src lisp :tangle yes
-(defun new-union (l r)
-  )
+My goal is to post all of my solutions online, therefore, I should bother to do all the exercises. Need to workout how to make the nice box-and-pointer diagrams.
 
-(union '(a b c) '(c b s))
+Write a version of =union= that preserves the order of the elements in the original lists:
+#+begin_src lisp
+(defun new-union (list1 list2)
+  (let ((rlist1 (reverse list1)))
+    (dolist (e list2 (nreverse rlist1))
+      (pushnew e rlist1))))
+#+end_src
+
+Define a function that takes a list and returns a list indicating the number of times each (=eql=) element appears, sorted from most common element to least common:
+#+begin_src lisp
+(defun freq (xs)
+  (let* ((uniq (remove-duplicates xs))
+         (alist (pairlis uniq (make-list (length uniq) :initial-element 0))))
+    (loop for x in xs
+          do (incf (cdr (assoc x alist))))
+    (sort alist #'> :key #'cdr)))
+#+end_src
+
+Why does ~(member '(a) '((a) (b)))~ return =nil=?
++ It returns =nil= because =member= uses =eql= as the default equality comparison, which doesn't work on lists. To get this to work as expected, we need to call ~(member '(a) '((a) (b)) :test #'equal)~
+
+Create a function =pos+= that takes a list and returns a list of each element plus its position:
+#+begin_src lisp
+(defun pos+ (xs &optional (index 0))    ; recursive
+  (if (null xs) '()
+      (cons (+ (car xs) index)
+            (pos+ (cdr xs) (1+ index)))))
+
+(defun pos+ (xs)                        ; iterative
+  (loop for x in xs
+        for i from 0
+        collect (+ x i)))
+
+(defun range (max &key (min 0) (step 1))
+  (loop for i from min below max by step
+        collect i))
+
+(defun pos+ (xs)                        ; mapcar
+  (mapcar #'+ xs (range (length xs))))
+#+end_src
+
+Optimise the run-length encoding program to use fewer =cons= cells (by using dotted lists):
+#+begin_src lisp
+(defun compress (x)
+  (if (consp x)
+      (compr (car x) 1 (cdr x))
+      x))
+
+(defun compr (x n xs)
+  (if (null xs)
+      (list (n-elts x n))
+      (let ((next (car xs)))
+        (if (eql next x)
+            (compr x (1+ n) (cdr xs))
+            (cons (n-elts x n)
+                  (compr next 1 (cdr xs)))))))
+
+(defun n-elts (x n)
+  ;; using a dotted list instead of a proper list saves a cons per item
+  (if (> n 1) (cons n x) x))
+
+(defun uncompress (xs)
+  (if (null xs) '()
+      (let ((x (car xs))
+            (rest (uncompress (cdr xs))))
+        (if (atom x)
+            (cons x rest)
+            (append (make-list (car x) :initial-element (cdr x))
+                    rest)))))
+#+end_src
+
+Define a function that takes a list and prints it in dot notation:
+#+begin_src lisp
+(defun showdots (xs)
+  (format t "~a" (showdots-recur xs)))
+
+(defun showdots-recur (xs)
+  (if (null xs) 'nil
+      (format nil "(~a . ~a)" (car xs) (showdots-recur (cdr xs)))))
+#+end_src
+
+Write a program to find the /longest/ finite path through a network represented as in Section 3.15. The network may contain cycles.
+#+begin_src lisp
+
 #+end_src

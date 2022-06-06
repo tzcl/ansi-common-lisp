@@ -2,7 +2,6 @@
 #+SUBTITLE: Welcome to Lisp
 
 * Exercises
-
 In this chapter, we look at the basic syntax and constructs of Common Lisp.
 
 ** Exercise 1

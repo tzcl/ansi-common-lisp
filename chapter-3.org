@@ -23,7 +23,11 @@
 * Exercises
 My goal is to post all of my solutions online, therefore, I should bother to do all the exercises. Need to workout how to make the nice box-and-pointer diagrams.
 
-Write a version of =union= that preserves the order of the elements in the original lists:
+One way to make diagrams is to use TikZ. Paul Graham says he used something called "Idraw" to create the diagrams in the text. I can't be bothered doing this so I just drew the diagram on my iPad. Need to work out how to export images nicely.
+
+Q1: [[https://i.imgur.com/pSbrSB4.png]]
+
+Q2: Write a version of =union= that preserves the order of the elements in the original lists:
 #+begin_src lisp
 (defun new-union (list1 list2)
   (let ((rlist1 (reverse list1)))
@@ -31,9 +35,10 @@ Write a version of =union= that preserves the order of the elements in the origi
       (pushnew e rlist1))))
 #+end_src
 
-Define a function that takes a list and returns a list indicating the number of times each (=eql=) element appears, sorted from most common element to least common:
+Q3: Define a function that takes a list and returns a list indicating the number of times each (=eql=) element appears, sorted from most common element to least common:
 #+begin_src lisp
 (defun freq (xs)
+  ;; Optimise by using a hashmap
   (let* ((uniq (remove-duplicates xs))
          (alist (pairlis uniq (make-list (length uniq) :initial-element 0))))
     (loop for x in xs
@@ -41,10 +46,10 @@ Define a function that takes a list and returns a list indicating the number of 
     (sort alist #'> :key #'cdr)))
 #+end_src
 
-Why does ~(member '(a) '((a) (b)))~ return =nil=?
-+ It returns =nil= because =member= uses =eql= as the default equality comparison, which doesn't work on lists. To get this to work as expected, we need to call ~(member '(a) '((a) (b)) :test #'equal)~
+Q4: Why does ~(member '(a) '((a) (b)))~ return =nil=?
++ It returns =nil= because =member= uses =eql= as the default equality comparison, which doesn't work on lists. To get this to work as expected, we need to tell =member= to use =equal=: ~(member '(a) '((a) (b)) :test #'equal)~.
 
-Create a function =pos+= that takes a list and returns a list of each element plus its position:
+Q5: Create a function =pos+= that takes a list and returns a list of each element plus its position:
 #+begin_src lisp
 (defun pos+ (xs &optional (index 0))    ; recursive
   (if (null xs) '()
@@ -61,10 +66,28 @@ Create a function =pos+= that takes a list and returns a list of each element pl
         collect i))
 
 (defun pos+ (xs)                        ; mapcar
-  (mapcar #'+ xs (range (length xs))))
+  (mapcar #'+ xs (range (length xs))))  ; zipWith is a common pattern in FP
 #+end_src
 
-Optimise the run-length encoding program to use fewer =cons= cells (by using dotted lists):
+Q6: Suppose the government swaps the representation of a list such that the =car= refers to the  and =cdr=. Then, we would define =cons=, =list=, =length= and =member= as:
+#+begin_src lisp
+(defun gov-cons (x y) (cons y x))
+
+(defun gov-list (xs)
+  (if (null xs) nil
+      (gov-cons (car xs) (gov-list (cdr xs)))))
+
+(defun gov-length (xs)
+  (if (null xs) 0
+      (+ 1 (gov-length (car xs)))))
+
+(defun gov-member (x xs)
+  (and (consp xs)
+       (or (eql x (cdr xs))
+           (gov-member x (car xs)))))
+#+end_src
+
+Q7: Optimise the run-length encoding program to use fewer =cons= cells (by using dotted lists):
 #+begin_src lisp
 (defun compress (x)
   (if (consp x)
@@ -94,7 +117,7 @@ Optimise the run-length encoding program to use fewer =cons= cells (by using dot
                     rest)))))
 #+end_src
 
-Define a function that takes a list and prints it in dot notation:
+Q8: Define a function that takes a list and prints it in dot notation:
 #+begin_src lisp
 (defun showdots (xs)
   (format t "~a" (showdots-recur xs)))
@@ -104,7 +127,26 @@ Define a function that takes a list and prints it in dot notation:
       (format nil "(~a . ~a)" (car xs) (showdots-recur (cdr xs)))))
 #+end_src
 
-Write a program to find the /longest/ finite path through a network represented as in Section 3.15. The network may contain cycles.
+Q9: Write a program to find the /longest/ finite path through a network represented as in Section 3.15. The network may contain cycles. In general, finding the longest path is an NP-hard problem. My approach was to find all paths between the start and the end using a DFS and selecting the longest.
 #+begin_src lisp
+(defun longest-path (start end net)
+  (dfs end net `((,start)) '(0 . nil)))
 
+(defun new-paths (path node net)
+  (loop for n in (cdr (assoc node net))
+        when (not (member n path))
+          collect (cons n path)))
+
+(defun longer (old new)
+  (let ((old-len (car old))             ; save recomputing the length
+        (new-len (length new)))
+    (if (< old-len new-len) (cons new-len (reverse new)) old)))
+
+(defun dfs (end net stack longest)
+  (if (null stack) (cdr longest)
+      (let* ((path (pop stack))
+             (node (car path)))
+        (dfs end net
+             (append (new-paths path node net) stack)
+             (longer longest path)))))
 #+end_src

@@ -174,6 +174,28 @@
 (defun pos+ (xs)                        ; mapcar
   (mapcar #'+ xs (range (length xs))))
 
+;; Swapping the representation of lists
+(defun gov-cons (x y) (cons y x))
+
+(defun gov-list (xs)
+  (if (null xs) nil
+      (gov-cons (car xs) (gov-list (cdr xs)))))
+
+(defun gov-length (xs)
+  (if (null xs) 0
+      (+ 1 (gov-length (car xs)))))
+
+(defun gov-member (x xs)
+  (if (null xs) nil
+      (or (eql x (cdr xs))
+          (gov-member x (car xs)))))
+
+;; we can use and to enforce preconditions
+(defun gov-member (x xs)
+  (and (consp xs)
+       (or (eql x (cdr xs))
+           (gov-member x (car xs)))))
+
 ;; Optimising run-length encoding
 (defun compress (x)
   (if (consp x)
@@ -210,14 +232,18 @@
   (if (null xs) 'nil
       (format nil "(~a . ~a)" (car xs) (showdots-recur (cdr xs)))))
 
-;; longest path
-(setf network '((a b c) (b c) (c d)))
+;; want to find the longest finite path in a network that may have cycles
+;; need to use a different algorithm? Or can reuse bfs?
+;; in general, longest path is NP-hard!
+(setf net '((a b c) (b c) (c d)))
+(setf net-1 '((a b c) (b c) (c a d)))   ; has a cycle
 
 (defun bfs (end queue net)
+  ;; returns the first path it finds, which is guaranteed to be one of the
+  ;; shortest paths
   (if (null queue) nil
       (let* ((path (car queue))
              (node (car path)))
-        (print queue)
         (if (eql end node) (reverse path)
             (bfs end
                  (append (cdr queue)
@@ -230,3 +256,25 @@
 
 (defun shortest-path (start end net)
   (bfs end (list (list start)) net))
+
+;; Use DFS to find all paths and keep track of the longest
+(defun dfs (end net stack longest)
+  (if (null stack) (cdr longest)
+      (let* ((path (pop stack))
+             (node (car path)))
+        (dfs end net
+             (append (new-paths path node net) stack)
+             (longer longest path)))))
+
+(defun new-paths (path node net)
+  (loop for n in (cdr (assoc node net))
+        when (not (member n path))
+          collect (cons n path)))
+
+(defun longer (old new)
+  (let ((old-len (car old))             ; save recomputing the length
+        (new-len (length new)))
+    (if (< old-len new-len) (cons new-len (reverse new)) old)))
+
+(defun longest-path (start end net)
+  (dfs end net `((,start)) '(0 . nil)))
